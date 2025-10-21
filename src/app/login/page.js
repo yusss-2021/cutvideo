@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import CryptoJS from "crypto-js";
 import Link from "next/link";
-import HeaderHomePage from "../components/HeaderHomePage"; // ✅ perbaikan import
+import HeaderHomePage from "../../components/HeaderHomePage"; // ✅ perbaikan import
 
 export default function LoginPage() {
   const brand = "ClipFastVideo";

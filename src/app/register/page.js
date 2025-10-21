@@ -6,7 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import CryptoJS from "crypto-js";
 import { apiRegister } from "../../utils/api"; // function lama
 import Link from "next/link";
-import HeaderHomePage from "../components/HeaderHomePage"; // ✅ perbaikan import
+import HeaderHomePage from "../../components/HeaderHomePage"; // ✅ perbaikan import
 
 export default function RegisterPage() {
   const brand = "ClipFastVideo";

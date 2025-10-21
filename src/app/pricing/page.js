@@ -3,7 +3,7 @@
 import React from "react";
 import PricingCard from "@/components/PricingCard";
 import { Building2, Zap, Rocket } from "lucide-react";
-import HeaderHomePage from "../components/HeaderHomePage"; // ✅ perbaikan import
+import HeaderHomePage from "../../components/HeaderHomePage"; // ✅ perbaikan import
 
 export default function PricingPage() {
   const brand = "ClipFastVideo";
