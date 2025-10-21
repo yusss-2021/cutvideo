@@ -4,25 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import CryptoJS from "crypto-js";
-import { apiRegister } from "../../utils/api"; // pakai function lama untuk registrasi
+import { apiRegister } from "../../utils/api"; // function lama
 import Link from "next/link";
-
-// 🔑 Secret key dari env
-const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_KEY;
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// Enkripsi endpoint registrasi
-const ENCRYPTED_API = CryptoJS.AES.encrypt(`${BASE_URL}/register`, SECRET_KEY).toString();
-
-// Fungsi dekripsi
-function decryptEndpoint(cipherText) {
-  try {
-    const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
-    return bytes.toString(CryptoJS.enc.Utf8);
-  } catch {
-    return "";
-  }
-}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -30,23 +13,44 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [message, setMessage] = useState("");
+  const [encryptedApi, setEncryptedApi] = useState("");
 
-  useEffect(() => setMounted(true), []);
+  const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_KEY;
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  // 🔐 Encrypt endpoint hanya setelah komponen mount (client-side)
+  useEffect(() => {
+    setMounted(true);
+    if (SECRET_KEY && BASE_URL) {
+      const enc = CryptoJS.AES.encrypt(`${BASE_URL}/register`, SECRET_KEY).toString();
+      setEncryptedApi(enc);
+    }
+  }, [SECRET_KEY, BASE_URL]);
+
   if (!mounted) return null;
+
+  // Fungsi dekripsi
+  const decryptEndpoint = (cipherText) => {
+    try {
+      const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
+      return bytes.toString(CryptoJS.enc.Utf8);
+    } catch {
+      return "";
+    }
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    const endpoint = decryptEndpoint(ENCRYPTED_API);
+    const endpoint = decryptEndpoint(encryptedApi);
     if (!endpoint) {
       setMessage("❌ Endpoint API tidak valid");
       return;
     }
 
     try {
-      // Bisa langsung pakai apiRegister atau fetch ke endpoint
+      // 🔧 Bisa pakai apiRegister() atau langsung fetch
       const result = await apiRegister(email, password);
 
       if (result.status === "success") {
@@ -135,7 +139,7 @@ export default function RegisterPage() {
         <p className="text-center text-sm text-gray-600 mt-4">
           Sudah punya akun?{" "}
           <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-            login
+            Login
           </Link>
         </p>
       </div>
