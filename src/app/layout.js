@@ -1,5 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "../../styles/globals.css";
+import { User, Settings } from "lucide-react";
+import Link from "next/link";
+import HeaderHomePage from "../components/HeaderHomePage"; // ✅ perbaikan import
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -10,6 +13,8 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+const brand = "ClipFastVideo";
 
 export const metadata = {
   title: "ClipFast — Potong Video Panjang Jadi Bagian Kecil Instan",
@@ -54,7 +59,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="id">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 text-gray-900`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased container mx-auto bg-gray-50 text-gray-900`}>
+        {/* ✅ panggil komponen dengan huruf besar */}
+        <HeaderHomePage brand={brand} />
+        {children}
+      </body>
     </html>
   );
 }

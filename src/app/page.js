@@ -1,31 +1,9 @@
 import Image from "next/image";
 import React from "react";
-import { User, Settings } from "lucide-react";
-import Link from "next/link";
 
 export default function Home() {
-  const brand = "ClipFastVideo";
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="flex items-center justify-between px-8 py-6">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-teal-400 rounded-lg transform -rotate-12"></div>
-          <span className="text-xl font-semibold">{brand}</span>
-        </div>
-
-        {/* Login / Register */}
-        <div className="flex items-center gap-4">
-          <Link href="/login" className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100 transition-colors">
-            Login
-          </Link>
-
-          <Link href="/register" className="px-5 py-2.5 bg-black text-white rounded-full hover:bg-gray-800 transition-colors">
-            Register
-          </Link>
-        </div>
-      </header>
       {/* Main Content */}
       <main className="flex flex-col items-center justify-center px-6 sm:px-8 py-12 sm:py-16">
         {/* Title Section */}
