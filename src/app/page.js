@@ -1,9 +1,13 @@
 import Image from "next/image";
 import React from "react";
+import HeaderHomePage from "../components/HeaderHomePage"; // ✅ perbaikan import
 
 export default function Home() {
+  const brand = "ClipFastVideo";
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* ✅ panggil komponen dengan huruf besar */}
+      <HeaderHomePage brand={brand} />
       {/* Main Content */}
       <main className="flex flex-col items-center justify-center px-6 sm:px-8 py-12 sm:py-16">
         {/* Title Section */}
