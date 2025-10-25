@@ -8,7 +8,7 @@ export default function HeaderHomePage({ brand = "CutVideo Tools" }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 relative">
+    <header className="flex items-center justify-between px-6 py-4 relative z-50">
       {/* Brand */}
       <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
         <div className="w-8 h-8 bg-teal-400 rounded-lg transform -rotate-12"></div>
