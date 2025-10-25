@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// ✅ Ini metadata standar (tanpa themeColor)
 export const metadata = {
   title: "ClipFast — Potong Video Panjang Jadi Bagian Kecil Instan",
   description: "ClipFast adalah tools online untuk memotong video panjang menjadi bagian-bagian pendek tanpa perlu komputer. Gunakan langsung dari ponsel dan unduh hasilnya kapan saja.",
@@ -49,8 +50,12 @@ export const metadata = {
     shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
   },
-  themeColor: "#000000",
   manifest: "/site.webmanifest",
+};
+
+// ✅ Ini gantiin themeColor lama
+export const viewport = {
+  themeColor: "#000000",
 };
 
 export default function RootLayout({ children }) {

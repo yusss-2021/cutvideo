@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { apiDashboard } from "../../utils/api";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-// Komponen Kartu Portfolio
-const PortfolioCard = ({ title, description, amount, change, changeLabel, bgColor, isPositive }) => {
+// ========================
+// 💡 Small Reusable Card
+// ========================
+function PortfolioCard({ title, description, amount, change, changeLabel, bgColor, isPositive }) {
   return (
     <div className={`${bgColor} rounded-2xl p-6 flex flex-col justify-between h-full`}>
       <div>
@@ -21,114 +25,149 @@ const PortfolioCard = ({ title, description, amount, change, changeLabel, bgColo
       </div>
     </div>
   );
-};
+}
 
-// Komponen Utama Dashboard
-const App = () => {
-  const timePeriods = ["24h", "7d", "6m", "1y", "Max"];
-  const [selectedPeriod, setSelectedPeriod] = useState("Max");
+// ========================
+// 📊 Upload Chart
+// ========================
+function UploadChart({ data }) {
+  if (!data?.length) return null;
+  return (
+    <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">📈 Upload Activity</h2>
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Line type="monotone" dataKey="count" stroke="#2563eb" strokeWidth={2} dot={{ r: 3 }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ========================
+// 🧩 Main Dashboard
+// ========================
+export default function DashboardPage() {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let interval;
+
+    async function getDashboard() {
+      try {
+        const res = await apiDashboard();
+
+        console.log("📦 Hasil API Dashboard:", res?.data);
+
+        const data = res?.data?.data;
+        if (!data?.user) throw new Error("Data user tidak ditemukan");
+
+        setDashboardData(data);
+      } catch (err) {
+        console.error("❌ Gagal fetch dashboard:", err);
+
+        // 🔍 Kalau response 401 → token invalid / tidak ada
+        if (err.response?.status === 401) {
+          console.warn("⚠️ Token invalid atau tidak ditemukan, logout...");
+          window.location.href = "/login";
+          return;
+        }
+
+        // 🔍 Atau kalau ada pesan Token dari backend
+        if (err.message?.includes("Token")) {
+          window.location.href = "/login";
+          return;
+        }
+
+        setError(err.message || "Gagal memuat data dashboard");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    getDashboard();
+    interval = setInterval(getDashboard, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) return <p className="text-gray-500 p-6">Loading dashboard...</p>;
+  if (error) return <p className="text-red-500 p-6">{error}</p>;
+  if (!dashboardData) return <p className="text-gray-500 p-6">Tidak ada data dashboard</p>;
+
+  const user = dashboardData.user || {};
+  const stats = dashboardData.stats || {};
+  const recentFiles = dashboardData.recent_files || [];
+
+  // ⚙️ Gunakan raw bytes langsung dari backend kalau tersedia
+  const usedBytes = Number(user.storage_used_raw) || 0;
+  const limitBytes = Number(user.plan_limit_raw) || 1;
+
+  const usedMB = usedBytes / (1024 * 1024);
+  const limitMB = limitBytes / (1024 * 1024);
+
+  const rawPercent = (usedBytes / limitBytes) * 100;
+  const percentUsed = Math.min(rawPercent, 100).toFixed(2);
+  const isOverLimit = rawPercent > 100;
 
   return (
-    <div className="bg-gray-50 min-h-screen p-4 pt-0">
+    <div className="bg-gray-50 min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Main Dashboard Grid */}
+        {/* Info Plan */}
+        <div className="bg-blue-100 border border-blue-300 text-blue-800 rounded-xl p-4 mb-6">
+          <p className="text-sm font-medium">
+            You are on the <strong>{user.plan || "Free"}</strong> plan. Upgrade anytime for more storage and features!
+          </p>
+        </div>
+
+        {/* Welcome */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Welcome, {user.username || "User"}</h1>
+          <p className="text-gray-700 text-sm">
+            Plan: {user.plan || "Free"} — Storage Used: {usedMB.toFixed(2)} MB / {limitMB.toFixed(2)} MB ({percentUsed}%)
+          </p>
+
+          {isOverLimit ? <p className="text-red-600 text-xs mt-1 font-semibold">🚨 Storage limit exceeded!</p> : rawPercent > 90 ? <p className="text-orange-500 text-xs mt-1">⚠️ Storage almost full!</p> : null}
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full bg-gray-200 rounded-full h-3 mb-6 overflow-hidden">
+          <div className={`h-3 rounded-full transition-all duration-500 ${isOverLimit ? "bg-red-600" : rawPercent > 90 ? "bg-orange-500" : "bg-blue-500"}`} style={{ width: `${percentUsed}%` }} />
+        </div>
+
+        {/* Stats cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Total Portfolio Card */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="mb-4">
-              <div className="text-sm text-gray-600 mb-2">Total portfolio</div>
-              <div className="text-4xl font-bold text-gray-900">
-                $35,687<span className="text-gray-400">.64</span>
-              </div>
-              <div className="text-xs text-gray-500 mt-2">You gained $34,036.04 last 6 months. Thats the best result in last 2 years.</div>
-            </div>
+          <PortfolioCard title="Total Files" description="Jumlah file yang kamu upload" amount={stats.total_files || 0} change="+" changeLabel="Files stored" bgColor="bg-yellow-200" isPositive={true} />
+          <PortfolioCard title="Total Storage Used" description="Total penggunaan penyimpanan" amount={stats.total_size || "0 MB"} change="+" changeLabel="Space used" bgColor="bg-pink-200" isPositive={true} />
+        </div>
 
-            {/* Time Period Filters */}
-            <div className="flex gap-2 mb-4">
-              {timePeriods.map((period) => (
-                <button key={period} onClick={() => setSelectedPeriod(period)} className={`px-3 py-1 text-xs rounded ${selectedPeriod === period ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-                  {period}
-                </button>
-              ))}
-            </div>
+        {/* Chart */}
+        {dashboardData.chart?.uploads && <UploadChart data={dashboardData.chart.uploads} />}
 
-            {/* Chart */}
-            <div className="relative h-40">
-              <svg width="100%" height="100%" viewBox="0 0 400 160" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ffc0cb" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#ffc0cb" stopOpacity="0.05" />
-                  </linearGradient>
-                </defs>
-                <path d="M 0,80 L 50,60 L 100,40 L 150,70 L 200,50 L 250,90 L 300,70 L 350,100 L 400,90" fill="none" stroke="#ffc0cb" strokeWidth="2" />
-                <path d="M 0,80 L 50,60 L 100,40 L 150,70 L 200,50 L 250,90 L 300,70 L 350,100 L 400,90 L 400,160 L 0,160 Z" fill="url(#gradient)" />
-                <circle cx="100" cy="40" r="4" fill="#8b5cf6" />
-                <line x1="100" y1="40" x2="100" y2="160" stroke="#8b5cf6" strokeWidth="1" strokeDasharray="4" />
-              </svg>
-              <div className="absolute top-8 left-24 bg-gray-900 text-white text-xs px-2 py-1 rounded">$18,495</div>
-              <div className="absolute bottom-2 left-0 right-0 flex justify-between text-xs text-gray-400 px-2">
-                <span>Jan</span>
-                <span>Feb</span>
-                <span>Mar</span>
-                <span>Apr</span>
-                <span>May</span>
-                <span>Jun</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Return on Investment Card */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <div className="text-sm text-gray-600 mb-2">Return on Investment</div>
-                <div className="text-4xl font-bold text-gray-900">
-                  $1234<span className="text-gray-400">.40</span>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">Oct 2022 - April 2023</div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm text-gray-600 mb-2">Last 6m</div>
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <div className="text-xs text-blue-600 font-semibold">▲ Increased by 20%</div>
-            </div>
-
-            {/* Bar Chart */}
-            <div className="relative h-40 flex items-end justify-between gap-4 px-2">
-              {["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"].map((month, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center">
-                  <div
-                    className={`w-full ${i === 1 ? "bg-gray-300 relative" : "bg-yellow-400"} rounded-t-lg`}
-                    style={{
-                      height: ["60%", "50%", "95%", "70%", "100%", "85%"][i],
-                    }}>
-                    {i === 1 && <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">Aug +34.5%</div>}
+        {/* Recent Files */}
+        {recentFiles.length > 0 && (
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">📁 Recent Files</h2>
+            <ul className="bg-white rounded-2xl shadow-sm divide-y divide-gray-100">
+              {recentFiles.map((file) => (
+                <li key={file.id} className="p-4 flex justify-between items-center">
+                  <div>
+                    <p className="font-medium text-gray-800">{file.original_filename || "Unknown File"}</p>
+                    <p className="text-xs text-gray-500">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB — Uploaded on {new Date(file.created_at).toLocaleString()}
+                    </p>
                   </div>
-                  <div className="text-xs text-gray-400 mt-2">{month}</div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
-        </div>
-
-        {/* Portfolio Details Section */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Portfolio Details</h2>
-          <button className="text-sm text-gray-700 hover:text-gray-900 font-medium">View More</button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <PortfolioCard title="Liquid Assets" description="Which representing your positions in pools" amount="$4,234.34" change="20.52%" changeLabel="This Week" bgColor="bg-yellow-300" isPositive={true} />
-          <PortfolioCard title="Margin Positions" description="Which representing your positions in pools" amount="$234.34" change="6.34%" changeLabel="This Week" bgColor="bg-pink-200" isPositive={true} />
-          <PortfolioCard title="LP Positions" description="Which representing your positions in pools" amount="$1,575.35" change="0.45%" changeLabel="This Week" bgColor="bg-purple-200" isPositive={true} />
-        </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default App;
+}

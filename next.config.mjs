@@ -20,13 +20,41 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "csspicker.dev", // ✅ tambahkan ini
+        hostname: "csspicker.dev",
       },
     ],
   },
+
   reactStrictMode: true,
+
   eslint: {
     ignoreDuringBuilds: true,
+  },
+
+  // ✅ Tambahkan ini agar request /api/... bisa diarahkan ke backend Node.js
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:4000/api/:path*", // arahkan ke backend
+      },
+    ];
+  },
+
+  // ✅ (opsional tapi disarankan)
+  // Agar Next.js tidak menghapus header credentials saat proxying ke backend
+  async headers() {
+    return [
+      {
+        source: "/api/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Credentials", value: "true" },
+          { key: "Access-Control-Allow-Origin", value: "http://localhost:3000" },
+          { key: "Access-Control-Allow-Methods", value: "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
+          { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization" },
+        ],
+      },
+    ];
   },
 };
 

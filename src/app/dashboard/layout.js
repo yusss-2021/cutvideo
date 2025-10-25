@@ -21,7 +21,7 @@ const Layout = ({ children }) => {
         <TopNavbar userName={userName} userAvatar={userAvatar} onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
         {/* Dynamic page content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">{children || <p className="text-gray-500">Isi konten yang akan berganti</p>}</main>
+        <main className="flex-1 overflow-y-auto p-2 bg-gray-50">{children || <p className="text-gray-500">Isi konten yang akan berganti</p>}</main>
       </div>
     </div>
   );

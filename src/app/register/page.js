@@ -2,26 +2,30 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
 import CryptoJS from "crypto-js";
-import { apiRegister } from "../../utils/api"; // function lama
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
+import { apiRegister } from "../../utils/api";
 import Link from "next/link";
-import HeaderHomePage from "../../components/HeaderHomePage"; // ✅ perbaikan import
+import HeaderHomePage from "../../components/HeaderHomePage";
 
 export default function RegisterPage() {
   const brand = "ClipFastVideo";
   const router = useRouter();
+
   const [mounted, setMounted] = useState(false);
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [open, setOpen] = useState(false);
   const [encryptedApi, setEncryptedApi] = useState("");
 
   const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_KEY;
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  // 🔐 Encrypt endpoint hanya setelah komponen mount (client-side)
   useEffect(() => {
     setMounted(true);
     if (SECRET_KEY && BASE_URL) {
@@ -32,7 +36,6 @@ export default function RegisterPage() {
 
   if (!mounted) return null;
 
-  // Fungsi dekripsi
   const decryptEndpoint = (cipherText) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipherText, SECRET_KEY);
@@ -44,26 +47,34 @@ export default function RegisterPage() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
     const endpoint = decryptEndpoint(encryptedApi);
     if (!endpoint) {
       setMessage("❌ Endpoint API tidak valid");
+      setIsSuccess(false);
+      setOpen(true);
       return;
     }
 
     try {
-      // 🔧 Bisa pakai apiRegister() atau langsung fetch
-      const result = await apiRegister(email, password);
+      const result = await apiRegister(username, email, password);
 
       if (result.status === "success") {
-        setMessage("✅ Registrasi berhasil, silakan login");
-        setTimeout(() => router.push("/login"), 1000);
+        setMessage(result.message || "✅ Registrasi berhasil! Silakan login.");
+        setIsSuccess(true);
+        setOpen(true);
+        setTimeout(() => {
+          setOpen(false);
+          router.push("/login");
+        }, 1500);
       } else {
-        setMessage(result.error?.message || "❌ Registrasi gagal, periksa kembali");
+        setMessage(result.message || "❌ Registrasi gagal, periksa kembali data Anda.");
+        setIsSuccess(false);
+        setOpen(true);
       }
     } catch (error) {
-      console.error(error);
-      setMessage("❌ Tidak dapat terhubung ke server");
+      setMessage("❌ Tidak dapat terhubung ke server.");
+      setIsSuccess(false);
+      setOpen(true);
     }
   };
 
@@ -74,7 +85,6 @@ export default function RegisterPage() {
         <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
           <div className="mb-6 text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Register</h1>
-            <p className="text-gray-600 text-sm">Buat akun baru Anda</p>
           </div>
 
           {/* Google Sign-in (dummy) */}
@@ -98,11 +108,20 @@ export default function RegisterPage() {
           </div>
 
           <form onSubmit={handleRegister}>
-            {/* Email */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email <span className="text-red-500">*</span>
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Masukkan username"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 type="email"
                 value={email}
@@ -113,11 +132,8 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Password */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password <span className="text-red-500">*</span>
-              </label>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -138,8 +154,6 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          {message && <p className="text-center text-sm text-gray-600 mt-4">{message}</p>}
-
           <p className="text-center text-sm text-gray-600 mt-4">
             Sudah punya akun?{" "}
             <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
@@ -148,6 +162,22 @@ export default function RegisterPage() {
           </p>
         </div>
       </div>
+
+      {/* Modal notifikasi */}
+      <Dialog open={open} onClose={setOpen} className="relative z-50">
+        <DialogBackdrop className="fixed inset-0 bg-black/50" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="bg-white rounded-2xl shadow-lg p-6 max-w-sm w-full text-center transition-all">
+            <div className="flex flex-col items-center">
+              {isSuccess ? <CheckCircle className="text-green-500 w-12 h-12 mb-3" /> : <XCircle className="text-red-500 w-12 h-12 mb-3" />}
+              <p className="text-gray-700 mb-4">{message}</p>
+              <button onClick={() => setOpen(false)} className={`px-5 py-2 rounded-lg font-medium text-white ${isSuccess ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}`}>
+                Tutup
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
+      </Dialog>
     </div>
   );
 }
