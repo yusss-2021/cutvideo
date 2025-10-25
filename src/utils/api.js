@@ -1,5 +1,5 @@
 // utils/api.js
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/users";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.128.57.96:8100/api/users";
 
 async function handleResponse(res) {
   let data;
@@ -90,7 +90,7 @@ export async function apiUploadCheck() {
 }
 
 export async function apiUploadVideo(formData) {
-  const API_URL = "http://localhost:4000/api/video/process";
+  const API_URL = "http://178.128.57.96:8100/api/video/process";
   const res = await fetch(API_URL, {
     method: "POST",
     body: formData,
@@ -101,7 +101,7 @@ export async function apiUploadVideo(formData) {
 
 export async function apiGetUserFolders() {
   try {
-    const res = await fetch("http://localhost:4000/api/video/folders", {
+    const res = await fetch("http://178.128.57.96:8100/api/video/folders", {
       method: "GET",
       credentials: "include", // kirim cookie JWT
     });
@@ -120,7 +120,7 @@ export async function apiGetUserFolders() {
 
 export async function apiGetFolderContents(folderName) {
   try {
-    const res = await fetch(`http://localhost:4000/api/video/folders/${folderName}`, {
+    const res = await fetch(`http://178.128.57.96:8100/api/video/folders/${folderName}`, {
       method: "GET",
       credentials: "include",
     });
